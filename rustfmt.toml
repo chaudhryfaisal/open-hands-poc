@@ -1,0 +1,39 @@
+# Rust formatting configuration for stable Rust
+# This file configures rustfmt for consistent code formatting
+
+# Basic formatting
+max_width = 100
+hard_tabs = false
+tab_spaces = 4
+
+# Imports (stable features only)
+reorder_imports = true
+
+# Functions and control flow
+fn_params_layout = "Tall"
+
+# Arrays and function calls
+array_width = 60
+fn_call_width = 60
+attr_fn_like_width = 70
+chain_width = 60
+
+# Misc
+remove_nested_parens = true
+use_small_heuristics = "Default"
+newline_style = "Unix"
+edition = "2021"
+
+# Note: Many advanced formatting options require nightly Rust
+# For nightly features, create a separate rustfmt-nightly.toml with:
+# unstable_features = true
+# and additional options like:
+# - imports_layout = "Vertical"
+# - imports_granularity = "Crate" 
+# - group_imports = "StdExternalCrate"
+# - brace_style = "SameLineWhere"
+# - control_brace_style = "AlwaysSameLine"
+# - format_strings = true
+# - normalize_comments = true
+# - wrap_comments = true
+# - trailing_comma = "Vertical"

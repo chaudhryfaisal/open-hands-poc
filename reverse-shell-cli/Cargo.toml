@@ -1,0 +1,23 @@
+[package]
+name = "reverse-shell-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { workspace = true }
+tokio-tungstenite = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+clap = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+native-tls = { workspace = true }
+url = { workspace = true }
+futures-util = { workspace = true }
+
+[dev-dependencies]
+tokio-test = "0.4"
