@@ -382,7 +382,7 @@ mod tests {
             false,
         );
 
-        let clients = vec![ClientInfo {
+        let clients = [ClientInfo {
             id: Uuid::new_v4(),
             hostname: "test-host".to_string(),
             os: "Linux".to_string(),

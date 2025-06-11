@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chrono::Utc;
-use serde_json::json;
+use serde_json::{from_str, to_string};
 use uuid::Uuid;
 
 // Define the types locally for testing
@@ -73,8 +73,8 @@ async fn test_client_list_request_serialization() -> Result<()> {
         admin_token: "admin_token_456".to_string(),
     });
 
-    let json = serde_json::to_string(&request)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&request)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::ClientListRequest(req) => {
@@ -102,8 +102,8 @@ async fn test_client_list_response_serialization() -> Result<()> {
         clients: vec![client_info.clone()],
     });
 
-    let json = serde_json::to_string(&response)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&response)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::ClientListResponse(resp) => {
@@ -125,8 +125,8 @@ async fn test_connect_to_client_request_serialization() -> Result<()> {
         client_id,
     });
 
-    let json = serde_json::to_string(&request)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&request)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::ConnectToClientRequest(req) => {
@@ -148,8 +148,8 @@ async fn test_connect_to_client_response_serialization() -> Result<()> {
         session_id: Some(session_id),
     });
 
-    let json = serde_json::to_string(&response)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&response)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::ConnectToClientResponse(resp) => {
@@ -171,8 +171,8 @@ async fn test_shell_command_serialization() -> Result<()> {
         session_id,
     });
 
-    let json = serde_json::to_string(&command)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&command)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::ShellCommand(cmd) => {
@@ -194,8 +194,8 @@ async fn test_shell_response_serialization() -> Result<()> {
         session_id,
     });
 
-    let json = serde_json::to_string(&response)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&response)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::ShellResponse(resp) => {
@@ -237,8 +237,8 @@ async fn test_error_message_serialization() -> Result<()> {
         message: "Test error message".to_string(),
     };
 
-    let json = serde_json::to_string(&error)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&error)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::Error { message } => {

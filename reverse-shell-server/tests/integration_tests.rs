@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use serde_json;
+use serde_json::{from_str, to_string};
 use uuid::Uuid;
 
 // Define the types locally for testing since we can't import from the main crate in tests
@@ -74,8 +74,8 @@ async fn test_client_authentication_success() -> Result<()> {
         token: "client_token_123".to_string(),
     });
 
-    let json = serde_json::to_string(&auth_request)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&auth_request)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::Auth(req) => {
@@ -96,8 +96,8 @@ async fn test_client_registration_message() -> Result<()> {
         uptime: 12345,
     });
 
-    let json = serde_json::to_string(&registration)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&registration)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::ClientRegistration(reg) => {
@@ -120,8 +120,8 @@ async fn test_shell_command_message() -> Result<()> {
         session_id,
     });
 
-    let json = serde_json::to_string(&command)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&command)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::ShellCommand(cmd) => {
@@ -143,8 +143,8 @@ async fn test_shell_response_message() -> Result<()> {
         session_id,
     });
 
-    let json = serde_json::to_string(&response)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&response)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::ShellResponse(resp) => {
@@ -164,8 +164,8 @@ async fn test_admin_client_list_request() -> Result<()> {
         admin_token: "admin_token_456".to_string(),
     });
 
-    let json = serde_json::to_string(&request)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&request)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::ClientListRequest(req) => {
@@ -185,8 +185,8 @@ async fn test_connect_to_client_request() -> Result<()> {
         client_id,
     });
 
-    let json = serde_json::to_string(&request)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&request)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::ConnectToClientRequest(req) => {
@@ -204,11 +204,11 @@ async fn test_ping_pong_messages() -> Result<()> {
     let ping = Message::Ping;
     let pong = Message::Pong;
 
-    let ping_json = serde_json::to_string(&ping)?;
-    let pong_json = serde_json::to_string(&pong)?;
+    let ping_json = to_string(&ping)?;
+    let pong_json = to_string(&pong)?;
 
-    let parsed_ping: Message = serde_json::from_str(&ping_json)?;
-    let parsed_pong: Message = serde_json::from_str(&pong_json)?;
+    let parsed_ping: Message = from_str(&ping_json)?;
+    let parsed_pong: Message = from_str(&pong_json)?;
 
     match (parsed_ping, parsed_pong) {
         (Message::Ping, Message::Pong) => {
@@ -226,8 +226,8 @@ async fn test_error_message() -> Result<()> {
         message: "Test error message".to_string(),
     };
 
-    let json = serde_json::to_string(&error)?;
-    let parsed: Message = serde_json::from_str(&json)?;
+    let json = to_string(&error)?;
+    let parsed: Message = from_str(&json)?;
 
     match parsed {
         Message::Error { message } => {
