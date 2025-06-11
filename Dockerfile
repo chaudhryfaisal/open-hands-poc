@@ -1,10 +1,11 @@
 # Multi-stage build for Reverse Shell System
-FROM rust:1.75-slim as builder
+FROM rust:1.82-slim as builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
@@ -22,7 +23,7 @@ COPY reverse-shell-client/src ./reverse-shell-client/src
 COPY reverse-shell-cli/src ./reverse-shell-cli/src
 
 # Build the applications
-RUN cargo build --release
+RUN cargo build --release --workspace
 
 # Runtime stage
 FROM debian:bookworm-slim

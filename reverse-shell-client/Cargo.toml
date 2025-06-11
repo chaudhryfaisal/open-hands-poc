@@ -21,6 +21,7 @@ futures-util = { workspace = true }
 hostname = { workspace = true }
 sysinfo = { workspace = true }
 bcrypt = { workspace = true }
+openssl = { workspace = true }
 
 [dev-dependencies]
 tokio-test = "0.4"

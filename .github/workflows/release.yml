@@ -57,7 +57,7 @@ jobs:
             
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            cross: true
+            cross: false
             
           # Windows targets
           - target: x86_64-pc-windows-msvc
@@ -95,14 +95,24 @@ jobs:
         run: |
           cargo install cross --git https://github.com/cross-rs/cross
           
+      - name: Install musl tools
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools musl-dev
+          
       - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest' && !matrix.cross
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y pkg-config libssl-dev
           
       - name: Build with cargo
         if: '!matrix.cross'
+        env:
+          # Use static linking for musl targets
+          RUSTFLAGS: ${{ matrix.target == 'x86_64-unknown-linux-musl' && '-C target-feature=+crt-static' || '' }}
+          CC: ${{ matrix.target == 'x86_64-unknown-linux-musl' && 'musl-gcc' || '' }}
         run: cargo build --release --workspace --target ${{ matrix.target }}
         
       - name: Build with cross
@@ -230,6 +240,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           
+      - name: Verify Docker setup
+        run: |
+          docker version
+          docker buildx version
+          
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -245,7 +260,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

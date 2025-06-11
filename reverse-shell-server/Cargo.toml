@@ -20,6 +20,7 @@ url = { workspace = true }
 futures-util = { workspace = true }
 bcrypt = { workspace = true }
 rand = { workspace = true }
+openssl = { workspace = true }
 
 [dev-dependencies]
 tokio-test = "0.4"
