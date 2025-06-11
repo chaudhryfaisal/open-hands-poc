@@ -51,8 +51,6 @@ jobs:
           sudo apt-get install -y pkg-config libssl-dev
           
       - name: Run clippy
-        env:
-          CARGO_BUILD_JOBS: 1
         run: cargo clippy --all-targets --all-features -- -D warnings
 
   test:
@@ -94,18 +92,12 @@ jobs:
           sudo apt-get install -y pkg-config libssl-dev
         
       - name: Build
-        env:
-          CARGO_BUILD_JOBS: 1
         run: cargo build --verbose
         
       - name: Run tests
-        env:
-          CARGO_BUILD_JOBS: 1
         run: cargo test --verbose
         
       - name: Run integration tests
-        env:
-          CARGO_BUILD_JOBS: 1
         run: cargo test --test integration_tests --verbose
 
   security:
