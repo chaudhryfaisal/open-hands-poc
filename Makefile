@@ -149,6 +149,24 @@ install: build
 	@echo "  - reverse-shell-client"
 	@echo "  - reverse-shell-cli"
 
+# Git hooks management
+.PHONY: install-hooks uninstall-hooks test-hooks
+install-hooks:
+	@echo "Installing git hooks..."
+	@./.githooks/install.sh
+	@echo "✅ Git hooks installed"
+
+uninstall-hooks:
+	@echo "Uninstalling git hooks..."
+	@rm -f .git/hooks/pre-commit .git/hooks/pre-push .git/hooks/commit-msg
+	@echo "✅ Git hooks uninstalled"
+
+test-hooks:
+	@echo "Testing git hooks..."
+	@if [ -x .git/hooks/pre-commit ]; then echo "✅ pre-commit hook is executable"; else echo "❌ pre-commit hook missing or not executable"; fi
+	@if [ -x .git/hooks/pre-push ]; then echo "✅ pre-push hook is executable"; else echo "❌ pre-push hook missing or not executable"; fi
+	@if [ -x .git/hooks/commit-msg ]; then echo "✅ commit-msg hook is executable"; else echo "❌ commit-msg hook missing or not executable"; fi
+
 # Development helpers
 dev-server: build-debug
 	./target/debug/reverse-shell-server \

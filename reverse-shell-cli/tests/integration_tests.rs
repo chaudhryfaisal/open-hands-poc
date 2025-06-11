@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chrono::Utc;
-use serde_json;
+use serde_json::json;
 use uuid::Uuid;
 
 // Define the types locally for testing
@@ -72,17 +72,17 @@ async fn test_client_list_request_serialization() -> Result<()> {
     let request = Message::ClientListRequest(ClientListRequest {
         admin_token: "admin_token_456".to_string(),
     });
-    
+
     let json = serde_json::to_string(&request)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::ClientListRequest(req) => {
             assert_eq!(req.admin_token, "admin_token_456");
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }
 
@@ -97,14 +97,14 @@ async fn test_client_list_response_serialization() -> Result<()> {
         connected_at: Utc::now(),
         last_seen: Utc::now(),
     };
-    
+
     let response = Message::ClientListResponse(ClientListResponse {
         clients: vec![client_info.clone()],
     });
-    
+
     let json = serde_json::to_string(&response)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::ClientListResponse(resp) => {
             assert_eq!(resp.clients.len(), 1);
@@ -113,7 +113,7 @@ async fn test_client_list_response_serialization() -> Result<()> {
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }
 
@@ -124,10 +124,10 @@ async fn test_connect_to_client_request_serialization() -> Result<()> {
         admin_token: "admin_token_456".to_string(),
         client_id,
     });
-    
+
     let json = serde_json::to_string(&request)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::ConnectToClientRequest(req) => {
             assert_eq!(req.admin_token, "admin_token_456");
@@ -135,7 +135,7 @@ async fn test_connect_to_client_request_serialization() -> Result<()> {
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }
 
@@ -147,10 +147,10 @@ async fn test_connect_to_client_response_serialization() -> Result<()> {
         message: "Connected successfully".to_string(),
         session_id: Some(session_id),
     });
-    
+
     let json = serde_json::to_string(&response)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::ConnectToClientResponse(resp) => {
             assert!(resp.success);
@@ -159,7 +159,7 @@ async fn test_connect_to_client_response_serialization() -> Result<()> {
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }
 
@@ -170,10 +170,10 @@ async fn test_shell_command_serialization() -> Result<()> {
         command: "ls -la".to_string(),
         session_id,
     });
-    
+
     let json = serde_json::to_string(&command)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::ShellCommand(cmd) => {
             assert_eq!(cmd.command, "ls -la");
@@ -181,7 +181,7 @@ async fn test_shell_command_serialization() -> Result<()> {
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }
 
@@ -193,10 +193,10 @@ async fn test_shell_response_serialization() -> Result<()> {
         exit_code: 0,
         session_id,
     });
-    
+
     let json = serde_json::to_string(&response)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::ShellResponse(resp) => {
             assert!(resp.output.contains("total 8"));
@@ -205,7 +205,7 @@ async fn test_shell_response_serialization() -> Result<()> {
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }
 
@@ -213,7 +213,7 @@ async fn test_shell_response_serialization() -> Result<()> {
 fn test_client_info_creation() {
     let client_id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let client_info = ClientInfo {
         id: client_id,
         hostname: "test-host".to_string(),
@@ -223,7 +223,7 @@ fn test_client_info_creation() {
         connected_at: now,
         last_seen: now,
     };
-    
+
     assert_eq!(client_info.id, client_id);
     assert_eq!(client_info.hostname, "test-host");
     assert_eq!(client_info.os, "Linux Ubuntu 20.04");
@@ -236,16 +236,16 @@ async fn test_error_message_serialization() -> Result<()> {
     let error = Message::Error {
         message: "Test error message".to_string(),
     };
-    
+
     let json = serde_json::to_string(&error)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::Error { message } => {
             assert_eq!(message, "Test error message");
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }

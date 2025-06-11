@@ -74,7 +74,7 @@ mod tests {
     #[test]
     fn test_auth_manager() {
         let mut auth_manager = AuthManager::new();
-        
+
         // Test adding and verifying client token
         auth_manager.add_client_token("test_client_token").unwrap();
         assert!(auth_manager.verify_client_token("test_client_token"));

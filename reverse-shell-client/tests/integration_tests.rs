@@ -23,7 +23,7 @@ async fn test_shell_executor_command_with_stderr() -> Result<()> {
     } else {
         "echo error >&2"
     };
-    
+
     let (output, _) = ShellExecutor::execute_command(command).await?;
     assert!(output.contains("error"));
     Ok(())
@@ -34,11 +34,11 @@ fn test_command_validation() {
     assert!(ShellExecutor::validate_command("ls -la").is_ok());
     assert!(ShellExecutor::validate_command("echo hello").is_ok());
     assert!(ShellExecutor::validate_command("pwd").is_ok());
-    
+
     // Test empty command
     assert!(ShellExecutor::validate_command("").is_err());
     assert!(ShellExecutor::validate_command("   ").is_err());
-    
+
     // Test dangerous commands
     assert!(ShellExecutor::validate_command("rm -rf /").is_err());
     assert!(ShellExecutor::validate_command("format c:").is_err());
@@ -52,7 +52,7 @@ async fn test_shell_executor_multiline_output() -> Result<()> {
     } else {
         "echo line1; echo line2"
     };
-    
+
     let (output, exit_code) = ShellExecutor::execute_command(command).await?;
     assert!(output.contains("line1"));
     assert!(output.contains("line2"));
@@ -67,7 +67,7 @@ async fn test_shell_executor_long_running_command() -> Result<()> {
     } else {
         "sleep 1 && echo done"
     };
-    
+
     let (output, exit_code) = ShellExecutor::execute_command(command).await?;
     assert_eq!(exit_code, 0);
     assert!(!output.is_empty());
@@ -85,7 +85,7 @@ fn test_dangerous_command_patterns() {
         "halt",
         "poweroff",
     ];
-    
+
     for cmd in &dangerous_commands {
         assert!(
             ShellExecutor::validate_command(cmd).is_err(),
@@ -108,7 +108,7 @@ fn test_safe_command_patterns() {
         "free -m",
         "uname -a",
     ];
-    
+
     for cmd in &safe_commands {
         assert!(
             ShellExecutor::validate_command(cmd).is_ok(),

@@ -2,7 +2,7 @@ use crate::shell::ShellExecutor;
 use crate::types::*;
 use anyhow::{anyhow, Result};
 use futures_util::{SinkExt, StreamExt};
-use hostname;
+use hostname::get;
 use std::time::Duration;
 use sysinfo::System;
 use tokio::time::sleep;
@@ -70,30 +70,28 @@ impl ReverseShellClient {
 
         // Wait for authentication response
         let mut authenticated = false;
-        let mut client_id: Option<Uuid> = None;
+        let client_id: Option<Uuid>;
 
         while let Some(msg) = ws_receiver.next().await {
             match msg {
-                Ok(WsMessage::Text(text)) => {
-                    match serde_json::from_str::<Message>(&text) {
-                        Ok(Message::AuthResponse(response)) => {
-                            if response.success {
-                                authenticated = true;
-                                client_id = response.client_id;
-                                info!("Authentication successful, client ID: {:?}", client_id);
-                                break;
-                            } else {
-                                return Err(anyhow!("Authentication failed: {}", response.message));
-                            }
-                        }
-                        Ok(Message::Error { message }) => {
-                            return Err(anyhow!("Server error: {}", message));
-                        }
-                        _ => {
-                            warn!("Unexpected message during authentication");
+                Ok(WsMessage::Text(text)) => match serde_json::from_str::<Message>(&text) {
+                    Ok(Message::AuthResponse(response)) => {
+                        if response.success {
+                            authenticated = true;
+                            client_id = response.client_id;
+                            info!("Authentication successful, client ID: {:?}", client_id);
+                            break;
+                        } else {
+                            return Err(anyhow!("Authentication failed: {}", response.message));
                         }
                     }
-                }
+                    Ok(Message::Error { message }) => {
+                        return Err(anyhow!("Server error: {}", message));
+                    }
+                    _ => {
+                        warn!("Unexpected message during authentication");
+                    }
+                },
                 Ok(WsMessage::Close(_)) => {
                     return Err(anyhow!("Connection closed during authentication"));
                 }
@@ -140,7 +138,7 @@ impl ReverseShellClient {
                         }
                     }
                 }
-                
+
                 // Handle incoming messages
                 msg = ws_receiver.next() => {
                     match msg {
@@ -149,7 +147,7 @@ impl ReverseShellClient {
                                 match serde_json::from_str::<Message>(&text) {
                                     Ok(Message::ShellCommand(cmd)) => {
                                         debug!("Received shell command: {}", cmd.command);
-                                        
+
                                         let response = match ShellExecutor::validate_command(&cmd.command) {
                                             Ok(_) => {
                                                 match ShellExecutor::execute_command(&cmd.command).await {
@@ -219,7 +217,7 @@ impl ReverseShellClient {
     }
 
     async fn get_client_registration(&self) -> Result<ClientRegistration> {
-        let hostname = hostname::get()
+        let hostname = get()
             .map_err(|e| anyhow!("Failed to get hostname: {}", e))?
             .to_string_lossy()
             .to_string();
@@ -227,7 +225,8 @@ impl ReverseShellClient {
         let mut system = System::new_all();
         system.refresh_all();
 
-        let os = format!("{} {}", 
+        let os = format!(
+            "{} {}",
             System::name().unwrap_or_else(|| "Unknown".to_string()),
             System::os_version().unwrap_or_else(|| "Unknown".to_string())
         );
@@ -267,11 +266,12 @@ mod tests {
             "test_token".to_string(),
             false,
         );
-        
+
         let registration = client.get_client_registration().await.unwrap();
         assert!(!registration.hostname.is_empty());
         assert!(!registration.os.is_empty());
         assert!(!registration.arch.is_empty());
-        assert!(registration.uptime >= 0);
+        // uptime is u64, so it's always >= 0
+        assert!(registration.uptime < u64::MAX);
     }
 }

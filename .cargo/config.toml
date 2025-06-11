@@ -1,0 +1,87 @@
+# Cargo configuration for the reverse shell project
+# This file configures cargo behavior for consistent builds
+
+[build]
+# Use all available CPU cores for compilation
+# jobs = 0  # 0 means use all cores, but some versions don't support this
+
+# Enable incremental compilation for faster builds
+incremental = true
+
+[target.x86_64-unknown-linux-gnu]
+# Use lld linker for faster linking on Linux (if available)
+# linker = "clang"
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+[target.x86_64-pc-windows-msvc]
+# Windows-specific optimizations
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.x86_64-apple-darwin]
+# macOS-specific optimizations
+rustflags = ["-C", "link-arg=-Wl,-dead_strip"]
+
+[target.aarch64-apple-darwin]
+# Apple Silicon optimizations
+rustflags = ["-C", "link-arg=-Wl,-dead_strip"]
+
+# Registry configuration
+[registry]
+# Use sparse index for faster dependency resolution
+default = "crates-io"
+
+[registries.crates-io]
+protocol = "sparse"
+
+# Environment variables
+[env]
+# Set RUST_BACKTRACE for better error messages in development
+RUST_BACKTRACE = { value = "1", condition = { env = "CARGO_CFG_DEBUG_ASSERTIONS" } }
+
+# Alias configurations for common commands
+[alias]
+# Common development commands
+b = "build"
+c = "check"
+t = "test"
+r = "run"
+f = "fmt"
+l = "clippy"
+
+# Extended commands
+br = "build --release"
+tr = "test --release"
+ta = "test --all"
+tar = "test --all --release"
+cw = "check --workspace"
+fw = "fmt --all"
+lw = "clippy --workspace"
+
+# Utility commands
+clean-all = "clean && cargo update"
+deps = "tree"
+
+# Build commands for different targets
+build-linux = "build --target x86_64-unknown-linux-gnu"
+build-windows = "build --target x86_64-pc-windows-msvc"
+build-macos = "build --target x86_64-apple-darwin"
+build-macos-arm = "build --target aarch64-apple-darwin"
+
+# Release commands
+release-linux = "build --release --target x86_64-unknown-linux-gnu"
+release-windows = "build --release --target x86_64-pc-windows-msvc"
+release-macos = "build --release --target x86_64-apple-darwin"
+release-macos-arm = "build --release --target aarch64-apple-darwin"
+
+# Documentation commands
+doc-open = "doc --open"
+doc-all = "doc --workspace --all-features"
+
+# Testing commands
+test-doc = "test --doc"
+test-integration = "test --test '*'"
+test-unit = "test --lib"
+
+# Linting and formatting
+lint = "clippy --all-targets --all-features -- -D warnings"
+fmt-check = "fmt --all -- --check"

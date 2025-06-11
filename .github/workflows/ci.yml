@@ -52,15 +52,23 @@ jobs:
         run: cargo fmt --all -- --check
         
       - name: Run clippy
+        env:
+          CARGO_BUILD_JOBS: 1
         run: cargo clippy --all-targets --all-features -- -D warnings
         
       - name: Build
+        env:
+          CARGO_BUILD_JOBS: 1
         run: cargo build --verbose
         
       - name: Run tests
+        env:
+          CARGO_BUILD_JOBS: 1
         run: cargo test --verbose
         
       - name: Run integration tests
+        env:
+          CARGO_BUILD_JOBS: 1
         run: cargo test --test integration_tests --verbose
 
   security:

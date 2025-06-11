@@ -6,7 +6,7 @@ use anyhow::Result;
 use clap::Parser;
 use server::ReverseShellServer;
 use tracing::{info, Level};
-use tracing_subscriber;
+use tracing_subscriber::fmt;
 
 #[derive(Parser)]
 #[command(name = "reverse-shell-server")]
@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
         _ => Level::INFO,
     };
 
-    tracing_subscriber::fmt()
+    fmt()
         .with_max_level(log_level)
         .with_target(false)
         .with_thread_ids(true)

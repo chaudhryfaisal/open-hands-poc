@@ -29,8 +29,14 @@ impl ShellExecutor {
             .stderr(Stdio::piped())
             .spawn()?;
 
-        let stdout = child.stdout.take().ok_or_else(|| anyhow!("Failed to capture stdout"))?;
-        let stderr = child.stderr.take().ok_or_else(|| anyhow!("Failed to capture stderr"))?;
+        let stdout = child
+            .stdout
+            .take()
+            .ok_or_else(|| anyhow!("Failed to capture stdout"))?;
+        let stderr = child
+            .stderr
+            .take()
+            .ok_or_else(|| anyhow!("Failed to capture stderr"))?;
 
         let mut stdout_reader = BufReader::new(stdout);
         let mut stderr_reader = BufReader::new(stderr);
@@ -100,20 +106,14 @@ impl ShellExecutor {
     pub fn validate_command(command: &str) -> Result<()> {
         // Basic security checks
         let command = command.trim();
-        
+
         if command.is_empty() {
             return Err(anyhow!("Empty command"));
         }
 
         // Block potentially dangerous commands (basic protection)
         let dangerous_patterns = [
-            "rm -rf /",
-            "format",
-            "del /s",
-            "shutdown",
-            "reboot",
-            "halt",
-            "poweroff",
+            "rm -rf /", "format", "del /s", "shutdown", "reboot", "halt", "poweroff",
         ];
 
         let command_lower = command.to_lowercase();
@@ -155,7 +155,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_command_with_stderr() {
-        let (output, _) = ShellExecutor::execute_command("echo error >&2").await.unwrap();
+        let (output, _) = ShellExecutor::execute_command("echo error >&2")
+            .await
+            .unwrap();
         assert!(output.contains("error"));
     }
 }

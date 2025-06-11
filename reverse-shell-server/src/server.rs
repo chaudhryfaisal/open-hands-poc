@@ -58,7 +58,11 @@ impl ReverseShellServer {
                             let auth_manager = Arc::clone(&auth_manager);
                             tokio::spawn(async move {
                                 if let Err(e) = Self::handle_client_connection(
-                                    stream, addr, clients, admins, auth_manager,
+                                    stream,
+                                    addr,
+                                    clients,
+                                    admins,
+                                    auth_manager,
                                 )
                                 .await
                                 {
@@ -87,7 +91,11 @@ impl ReverseShellServer {
                             let auth_manager = Arc::clone(&auth_manager);
                             tokio::spawn(async move {
                                 if let Err(e) = Self::handle_admin_connection(
-                                    stream, addr, clients, admins, auth_manager,
+                                    stream,
+                                    addr,
+                                    clients,
+                                    admins,
+                                    auth_manager,
                                 )
                                 .await
                                 {
@@ -157,17 +165,17 @@ impl ReverseShellServer {
                                 authenticated = true;
                                 let new_client_id = Uuid::new_v4();
                                 client_id = Some(new_client_id);
-                                
+
                                 let response = AuthResponse {
                                     success: true,
                                     message: "Authentication successful".to_string(),
                                     client_id: Some(new_client_id),
                                 };
-                                
+
                                 if tx.send(Message::AuthResponse(response)).is_err() {
                                     break;
                                 }
-                                
+
                                 info!("Client {} authenticated successfully", new_client_id);
                             } else {
                                 let response = AuthResponse {
@@ -175,11 +183,11 @@ impl ReverseShellServer {
                                     message: "Authentication failed".to_string(),
                                     client_id: None,
                                 };
-                                
+
                                 if tx.send(Message::AuthResponse(response)).is_err() {
                                     break;
                                 }
-                                
+
                                 warn!("Client authentication failed from {}", addr);
                                 break;
                             }
@@ -189,7 +197,7 @@ impl ReverseShellServer {
                                 warn!("Unauthenticated client attempted registration");
                                 break;
                             }
-                            
+
                             if let Some(id) = client_id {
                                 let client_info = ClientInfo {
                                     id,
@@ -200,12 +208,12 @@ impl ReverseShellServer {
                                     connected_at: Utc::now(),
                                     last_seen: Utc::now(),
                                 };
-                                
+
                                 let connected_client = ConnectedClient {
                                     info: client_info.clone(),
                                     sender: tx.clone(),
                                 };
-                                
+
                                 clients.write().await.insert(id, connected_client);
                                 info!("Client registered: {} ({})", client_info.hostname, id);
                             }
@@ -215,13 +223,15 @@ impl ReverseShellServer {
                                 warn!("Unauthenticated client attempted shell response");
                                 break;
                             }
-                            
+
                             // Forward response to the appropriate admin session
                             let admins_read = admins.read().await;
                             for admin in admins_read.values() {
                                 if let Some(connected_client_id) = admin.connected_client_id {
                                     if Some(connected_client_id) == client_id {
-                                        let _ = admin.sender.send(Message::ShellResponse(response.clone()));
+                                        let _ = admin
+                                            .sender
+                                            .send(Message::ShellResponse(response.clone()));
                                     }
                                 }
                             }
@@ -258,7 +268,7 @@ impl ReverseShellServer {
             clients.write().await.remove(&id);
             info!("Client {} disconnected", id);
         }
-        
+
         sender_task.abort();
         Ok(())
     }
@@ -301,7 +311,7 @@ impl ReverseShellServer {
                                 let _ = tx.send(error_msg);
                                 continue;
                             }
-                            
+
                             if !authenticated {
                                 authenticated = true;
                                 let admin_session = AdminSession {
@@ -312,17 +322,15 @@ impl ReverseShellServer {
                                 admins.write().await.insert(admin_id, admin_session);
                                 info!("Admin {} authenticated successfully", admin_id);
                             }
-                            
+
                             let clients_read = clients.read().await;
-                            let client_list: Vec<ClientInfo> = clients_read
-                                .values()
-                                .map(|c| c.info.clone())
-                                .collect();
-                            
+                            let client_list: Vec<ClientInfo> =
+                                clients_read.values().map(|c| c.info.clone()).collect();
+
                             let response = ClientListResponse {
                                 clients: client_list,
                             };
-                            
+
                             let _ = tx.send(Message::ClientListResponse(response));
                         }
                         Ok(Message::ConnectToClientRequest(req)) => {
@@ -334,20 +342,20 @@ impl ReverseShellServer {
                                 let _ = tx.send(error_msg);
                                 continue;
                             }
-                            
+
                             let clients_read = clients.read().await;
                             if clients_read.contains_key(&req.client_id) {
                                 // Update admin session to connect to client
                                 if let Some(admin) = admins.write().await.get_mut(&admin_id) {
                                     admin.connected_client_id = Some(req.client_id);
                                 }
-                                
+
                                 let response = ConnectToClientResponse {
                                     success: true,
                                     message: "Connected to client".to_string(),
                                     session_id: Some(Uuid::new_v4()),
                                 };
-                                
+
                                 let _ = tx.send(Message::ConnectToClientResponse(response));
                                 info!("Admin {} connected to client {}", admin_id, req.client_id);
                             } else {
@@ -356,7 +364,7 @@ impl ReverseShellServer {
                                     message: "Client not found".to_string(),
                                     session_id: None,
                                 };
-                                
+
                                 let _ = tx.send(Message::ConnectToClientResponse(response));
                             }
                         }
@@ -365,7 +373,7 @@ impl ReverseShellServer {
                                 warn!("Unauthenticated admin attempted shell command");
                                 break;
                             }
-                            
+
                             // Forward command to connected client
                             if let Some(admin) = admins.read().await.get(&admin_id) {
                                 if let Some(client_id) = admin.connected_client_id {
@@ -398,7 +406,7 @@ impl ReverseShellServer {
         // Cleanup
         admins.write().await.remove(&admin_id);
         info!("Admin {} disconnected", admin_id);
-        
+
         sender_task.abort();
         Ok(())
     }
@@ -408,7 +416,7 @@ impl ReverseShellServer {
         _admins: &Arc<RwLock<AdminMap>>,
     ) {
         let mut to_remove = Vec::new();
-        
+
         {
             let clients_read = clients.read().await;
             for (id, client) in clients_read.iter() {
@@ -418,7 +426,7 @@ impl ReverseShellServer {
                 }
             }
         }
-        
+
         if !to_remove.is_empty() {
             let mut clients_write = clients.write().await;
             for id in to_remove {
@@ -432,7 +440,6 @@ impl ReverseShellServer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio_test;
 
     #[tokio::test]
     async fn test_server_creation() {
@@ -445,7 +452,7 @@ mod tests {
     async fn test_client_map_operations() {
         let clients: Arc<RwLock<ClientMap>> = Arc::new(RwLock::new(HashMap::new()));
         let client_id = Uuid::new_v4();
-        
+
         let (tx, _rx) = mpsc::unbounded_channel();
         let client_info = ClientInfo {
             id: client_id,
@@ -456,15 +463,15 @@ mod tests {
             connected_at: Utc::now(),
             last_seen: Utc::now(),
         };
-        
+
         let connected_client = ConnectedClient {
             info: client_info,
             sender: tx,
         };
-        
+
         clients.write().await.insert(client_id, connected_client);
         assert!(clients.read().await.contains_key(&client_id));
-        
+
         clients.write().await.remove(&client_id);
         assert!(!clients.read().await.contains_key(&client_id));
     }

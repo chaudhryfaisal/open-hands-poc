@@ -31,9 +31,13 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           
       - name: Run tests
+        env:
+          CARGO_BUILD_JOBS: 1
         run: cargo test --verbose
         
       - name: Run clippy
+        env:
+          CARGO_BUILD_JOBS: 1
         run: cargo clippy -- -D warnings
         
       - name: Check formatting
@@ -141,10 +145,14 @@ jobs:
           
       - name: Build with cargo
         if: '!matrix.cross'
+        env:
+          CARGO_BUILD_JOBS: 1
         run: cargo build --release --target ${{ matrix.target }}
         
       - name: Build with cross
         if: matrix.cross
+        env:
+          CARGO_BUILD_JOBS: 1
         run: cross build --release --target ${{ matrix.target }}
         
       - name: Create archive (Unix)

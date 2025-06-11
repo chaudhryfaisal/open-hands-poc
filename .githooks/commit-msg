@@ -1,0 +1,166 @@
+#!/bin/bash
+# Commit message hook for enforcing conventional commit format
+# This hook validates commit message format and content
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+print_status() {
+    echo -e "${BLUE}[HOOK]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Get the commit message file
+commit_msg_file="$1"
+commit_msg=$(cat "$commit_msg_file")
+
+print_status "Validating commit message..."
+
+# Skip validation for merge commits
+if echo "$commit_msg" | grep -q "^Merge "; then
+    print_status "Merge commit detected, skipping validation"
+    exit 0
+fi
+
+# Skip validation for revert commits
+if echo "$commit_msg" | grep -q "^Revert "; then
+    print_status "Revert commit detected, skipping validation"
+    exit 0
+fi
+
+# Get the first line of the commit message
+first_line=$(echo "$commit_msg" | head -n 1)
+
+# Check minimum length
+if [ ${#first_line} -lt 10 ]; then
+    print_error "Commit message too short (${#first_line} chars). Minimum 10 characters required."
+    print_error "Current: $first_line"
+    exit 1
+fi
+
+# Check maximum length for first line
+if [ ${#first_line} -gt 72 ]; then
+    print_error "Commit message first line too long (${#first_line} chars). Maximum 72 characters."
+    print_error "Current: $first_line"
+    exit 1
+fi
+
+# Check for conventional commit format (optional but recommended)
+conventional_pattern="^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\(.+\))?: .+"
+if echo "$first_line" | grep -qE "$conventional_pattern"; then
+    print_success "Conventional commit format detected"
+else
+    print_warning "Consider using conventional commit format:"
+    print_warning "  feat: add new feature"
+    print_warning "  fix: bug fix"
+    print_warning "  docs: documentation changes"
+    print_warning "  style: formatting changes"
+    print_warning "  refactor: code refactoring"
+    print_warning "  perf: performance improvements"
+    print_warning "  test: test changes"
+    print_warning "  chore: maintenance tasks"
+    print_warning "  ci: CI/CD changes"
+    print_warning "  build: build system changes"
+fi
+
+# Check for imperative mood (starts with verb)
+if echo "$first_line" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|chore|ci|build): "; then
+    # Extract the description part after the type
+    description=$(echo "$first_line" | sed -E 's/^[a-z]+(\([^)]+\))?: //')
+else
+    description="$first_line"
+fi
+
+# Check if description starts with lowercase (imperative mood)
+if echo "$description" | grep -qE "^[a-z]"; then
+    print_success "Imperative mood detected"
+else
+    print_warning "Consider using imperative mood (lowercase start): '$description'"
+fi
+
+# Check for common anti-patterns
+if echo "$first_line" | grep -qiE "(fixed|added|updated|changed)"; then
+    print_warning "Consider using imperative mood instead of past tense"
+    print_warning "  Instead of 'fixed bug' use 'fix bug'"
+    print_warning "  Instead of 'added feature' use 'add feature'"
+fi
+
+# Check for ending punctuation
+if echo "$first_line" | grep -qE "\.$"; then
+    print_warning "Remove trailing period from commit message"
+fi
+
+# Check for WIP or TODO in commit message
+if echo "$commit_msg" | grep -qiE "\b(wip|todo|fixme|xxx|hack)\b"; then
+    print_error "Commit message contains WIP/TODO markers"
+    print_error "Please complete the work before committing"
+    exit 1
+fi
+
+# Check for profanity or inappropriate language
+inappropriate_words=("fuck" "shit" "damn" "crap" "stupid" "dumb" "idiot")
+for word in "${inappropriate_words[@]}"; do
+    if echo "$commit_msg" | grep -qiE "\b$word\b"; then
+        print_error "Inappropriate language detected in commit message"
+        exit 1
+    fi
+done
+
+# Check for proper capitalization
+if echo "$first_line" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.+\))?: [A-Z]"; then
+    print_warning "Consider starting description with lowercase letter"
+fi
+
+# Validate body format if present
+line_count=$(echo "$commit_msg" | wc -l)
+if [ $line_count -gt 1 ]; then
+    second_line=$(echo "$commit_msg" | sed -n '2p')
+    if [ -n "$second_line" ]; then
+        print_error "Second line should be empty (blank line after subject)"
+        exit 1
+    fi
+    
+    # Check body line lengths
+    echo "$commit_msg" | tail -n +3 | while IFS= read -r line; do
+        if [ ${#line} -gt 80 ]; then
+            print_warning "Body line too long (${#line} chars): $line"
+            print_warning "Consider wrapping at 72-80 characters"
+        fi
+    done
+fi
+
+# Check for issue references
+if echo "$commit_msg" | grep -qE "(closes?|fixes?|resolves?) #[0-9]+"; then
+    print_success "Issue reference found"
+fi
+
+# Check for co-authors
+if echo "$commit_msg" | grep -qE "Co-authored-by: "; then
+    print_success "Co-author attribution found"
+fi
+
+print_success "Commit message validation passed"
+
+# Optional: Add automatic formatting suggestions
+if [ ${#first_line} -gt 50 ] && [ ${#first_line} -le 72 ]; then
+    print_warning "Consider keeping subject line under 50 characters for better readability"
+fi
+
+print_status "Commit message looks good! 📝"

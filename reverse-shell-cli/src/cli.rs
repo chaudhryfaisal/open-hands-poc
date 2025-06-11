@@ -41,8 +41,10 @@ impl ReverseShellCli {
         info!("Connected to server");
 
         // Get list of clients
-        let clients = self.get_client_list(&mut ws_sender, &mut ws_receiver).await?;
-        
+        let clients = self
+            .get_client_list(&mut ws_sender, &mut ws_receiver)
+            .await?;
+
         if clients.is_empty() {
             println!("No clients connected to the server.");
             return Ok(());
@@ -50,12 +52,15 @@ impl ReverseShellCli {
 
         // Display clients and let user choose
         let selected_client = self.select_client(&clients)?;
-        
+
         // Connect to selected client
-        let session_id = self.connect_to_client(&mut ws_sender, &mut ws_receiver, selected_client.id).await?;
-        
+        let session_id = self
+            .connect_to_client(&mut ws_sender, &mut ws_receiver, selected_client.id)
+            .await?;
+
         // Start interactive shell session
-        self.interactive_shell_session(&mut ws_sender, &mut ws_receiver, session_id).await?;
+        self.interactive_shell_session(&mut ws_sender, &mut ws_receiver, session_id)
+            .await?;
 
         Ok(())
     }
@@ -63,35 +68,37 @@ impl ReverseShellCli {
     async fn get_client_list(
         &self,
         ws_sender: &mut futures_util::stream::SplitSink<
-            tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
+            tokio_tungstenite::WebSocketStream<
+                tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
+            >,
             WsMessage,
         >,
         ws_receiver: &mut futures_util::stream::SplitStream<
-            tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
+            tokio_tungstenite::WebSocketStream<
+                tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
+            >,
         >,
     ) -> Result<Vec<ClientInfo>> {
         let request = Message::ClientListRequest(ClientListRequest {
             admin_token: self.admin_token.clone(),
         });
-        
+
         let request_json = serde_json::to_string(&request)?;
         ws_sender.send(WsMessage::Text(request_json)).await?;
 
         while let Some(msg) = ws_receiver.next().await {
             match msg {
-                Ok(WsMessage::Text(text)) => {
-                    match serde_json::from_str::<Message>(&text) {
-                        Ok(Message::ClientListResponse(response)) => {
-                            return Ok(response.clients);
-                        }
-                        Ok(Message::Error { message }) => {
-                            return Err(anyhow!("Server error: {}", message));
-                        }
-                        _ => {
-                            debug!("Unexpected message while getting client list");
-                        }
+                Ok(WsMessage::Text(text)) => match serde_json::from_str::<Message>(&text) {
+                    Ok(Message::ClientListResponse(response)) => {
+                        return Ok(response.clients);
                     }
-                }
+                    Ok(Message::Error { message }) => {
+                        return Err(anyhow!("Server error: {}", message));
+                    }
+                    _ => {
+                        debug!("Unexpected message while getting client list");
+                    }
+                },
                 Ok(WsMessage::Close(_)) => {
                     return Err(anyhow!("Connection closed"));
                 }
@@ -139,7 +146,10 @@ impl ReverseShellCli {
                 if index > 0 && index <= clients.len() {
                     return Ok(&clients[index - 1]);
                 } else {
-                    println!("Invalid index. Please enter a number between 1 and {}", clients.len());
+                    println!(
+                        "Invalid index. Please enter a number between 1 and {}",
+                        clients.len()
+                    );
                     continue;
                 }
             }
@@ -161,11 +171,15 @@ impl ReverseShellCli {
     async fn connect_to_client(
         &self,
         ws_sender: &mut futures_util::stream::SplitSink<
-            tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
+            tokio_tungstenite::WebSocketStream<
+                tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
+            >,
             WsMessage,
         >,
         ws_receiver: &mut futures_util::stream::SplitStream<
-            tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
+            tokio_tungstenite::WebSocketStream<
+                tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
+            >,
         >,
         client_id: Uuid,
     ) -> Result<Uuid> {
@@ -173,34 +187,35 @@ impl ReverseShellCli {
             admin_token: self.admin_token.clone(),
             client_id,
         });
-        
+
         let request_json = serde_json::to_string(&request)?;
         ws_sender.send(WsMessage::Text(request_json)).await?;
 
         while let Some(msg) = ws_receiver.next().await {
             match msg {
-                Ok(WsMessage::Text(text)) => {
-                    match serde_json::from_str::<Message>(&text) {
-                        Ok(Message::ConnectToClientResponse(response)) => {
-                            if response.success {
-                                if let Some(session_id) = response.session_id {
-                                    info!("Connected to client successfully");
-                                    return Ok(session_id);
-                                } else {
-                                    return Err(anyhow!("No session ID provided"));
-                                }
+                Ok(WsMessage::Text(text)) => match serde_json::from_str::<Message>(&text) {
+                    Ok(Message::ConnectToClientResponse(response)) => {
+                        if response.success {
+                            if let Some(session_id) = response.session_id {
+                                info!("Connected to client successfully");
+                                return Ok(session_id);
                             } else {
-                                return Err(anyhow!("Failed to connect to client: {}", response.message));
+                                return Err(anyhow!("No session ID provided"));
                             }
-                        }
-                        Ok(Message::Error { message }) => {
-                            return Err(anyhow!("Server error: {}", message));
-                        }
-                        _ => {
-                            debug!("Unexpected message while connecting to client");
+                        } else {
+                            return Err(anyhow!(
+                                "Failed to connect to client: {}",
+                                response.message
+                            ));
                         }
                     }
-                }
+                    Ok(Message::Error { message }) => {
+                        return Err(anyhow!("Server error: {}", message));
+                    }
+                    _ => {
+                        debug!("Unexpected message while connecting to client");
+                    }
+                },
                 Ok(WsMessage::Close(_)) => {
                     return Err(anyhow!("Connection closed"));
                 }
@@ -217,11 +232,15 @@ impl ReverseShellCli {
     async fn interactive_shell_session(
         &self,
         ws_sender: &mut futures_util::stream::SplitSink<
-            tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
+            tokio_tungstenite::WebSocketStream<
+                tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
+            >,
             WsMessage,
         >,
         ws_receiver: &mut futures_util::stream::SplitStream<
-            tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
+            tokio_tungstenite::WebSocketStream<
+                tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
+            >,
         >,
         session_id: Uuid,
     ) -> Result<()> {
@@ -237,7 +256,7 @@ impl ReverseShellCli {
             io::stdout().flush()?;
 
             let mut command = String::new();
-            
+
             tokio::select! {
                 // Handle user input
                 result = stdin_reader.read_line(&mut command) => {
@@ -245,27 +264,27 @@ impl ReverseShellCli {
                         Ok(0) => break, // EOF
                         Ok(_) => {
                             let command = command.trim();
-                            
+
                             if command.is_empty() {
                                 continue;
                             }
-                            
+
                             if command == "exit" || command == "quit" {
                                 println!("Ending session...");
                                 break;
                             }
-                            
+
                             if command == "help" {
                                 self.show_help();
                                 continue;
                             }
-                            
+
                             // Send command to client
                             let shell_command = Message::ShellCommand(ShellCommand {
                                 command: command.to_string(),
                                 session_id,
                             });
-                            
+
                             let command_json = serde_json::to_string(&shell_command)?;
                             if let Err(e) = ws_sender.send(WsMessage::Text(command_json)).await {
                                 error!("Failed to send command: {}", e);
@@ -278,7 +297,7 @@ impl ReverseShellCli {
                         }
                     }
                 }
-                
+
                 // Handle server responses
                 msg = ws_receiver.next() => {
                     match msg {
@@ -357,23 +376,21 @@ mod tests {
 
     #[test]
     fn test_select_client_with_valid_clients() {
-        let cli = ReverseShellCli::new(
+        let _cli = ReverseShellCli::new(
             "localhost:8081".to_string(),
             "admin_token_456".to_string(),
             false,
         );
 
-        let clients = vec![
-            ClientInfo {
-                id: Uuid::new_v4(),
-                hostname: "test-host".to_string(),
-                os: "Linux".to_string(),
-                arch: "x86_64".to_string(),
-                uptime: 12345,
-                connected_at: Utc::now(),
-                last_seen: Utc::now(),
-            }
-        ];
+        let clients = vec![ClientInfo {
+            id: Uuid::new_v4(),
+            hostname: "test-host".to_string(),
+            os: "Linux".to_string(),
+            arch: "x86_64".to_string(),
+            uptime: 12345,
+            connected_at: Utc::now(),
+            last_seen: Utc::now(),
+        }];
 
         // This test would require mocking stdin, so we'll just verify the structure
         assert_eq!(clients.len(), 1);

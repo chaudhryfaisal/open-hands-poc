@@ -1,5 +1,5 @@
 use anyhow::Result;
-use chrono::Utc;
+
 use serde_json;
 use uuid::Uuid;
 
@@ -69,21 +69,21 @@ pub enum Message {
 async fn test_client_authentication_success() -> Result<()> {
     // This test would require a running server
     // For now, we'll test the message serialization/deserialization
-    
+
     let auth_request = Message::Auth(AuthRequest {
         token: "client_token_123".to_string(),
     });
-    
+
     let json = serde_json::to_string(&auth_request)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::Auth(req) => {
             assert_eq!(req.token, "client_token_123");
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }
 
@@ -95,10 +95,10 @@ async fn test_client_registration_message() -> Result<()> {
         arch: "x86_64".to_string(),
         uptime: 12345,
     });
-    
+
     let json = serde_json::to_string(&registration)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::ClientRegistration(reg) => {
             assert_eq!(reg.hostname, "test-host");
@@ -108,7 +108,7 @@ async fn test_client_registration_message() -> Result<()> {
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }
 
@@ -119,10 +119,10 @@ async fn test_shell_command_message() -> Result<()> {
         command: "ls -la".to_string(),
         session_id,
     });
-    
+
     let json = serde_json::to_string(&command)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::ShellCommand(cmd) => {
             assert_eq!(cmd.command, "ls -la");
@@ -130,7 +130,7 @@ async fn test_shell_command_message() -> Result<()> {
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }
 
@@ -142,10 +142,10 @@ async fn test_shell_response_message() -> Result<()> {
         exit_code: 0,
         session_id,
     });
-    
+
     let json = serde_json::to_string(&response)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::ShellResponse(resp) => {
             assert!(resp.output.contains("total 8"));
@@ -154,7 +154,7 @@ async fn test_shell_response_message() -> Result<()> {
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }
 
@@ -163,17 +163,17 @@ async fn test_admin_client_list_request() -> Result<()> {
     let request = Message::ClientListRequest(ClientListRequest {
         admin_token: "admin_token_456".to_string(),
     });
-    
+
     let json = serde_json::to_string(&request)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::ClientListRequest(req) => {
             assert_eq!(req.admin_token, "admin_token_456");
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }
 
@@ -184,10 +184,10 @@ async fn test_connect_to_client_request() -> Result<()> {
         admin_token: "admin_token_456".to_string(),
         client_id,
     });
-    
+
     let json = serde_json::to_string(&request)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::ConnectToClientRequest(req) => {
             assert_eq!(req.admin_token, "admin_token_456");
@@ -195,7 +195,7 @@ async fn test_connect_to_client_request() -> Result<()> {
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }
 
@@ -203,20 +203,20 @@ async fn test_connect_to_client_request() -> Result<()> {
 async fn test_ping_pong_messages() -> Result<()> {
     let ping = Message::Ping;
     let pong = Message::Pong;
-    
+
     let ping_json = serde_json::to_string(&ping)?;
     let pong_json = serde_json::to_string(&pong)?;
-    
+
     let parsed_ping: Message = serde_json::from_str(&ping_json)?;
     let parsed_pong: Message = serde_json::from_str(&pong_json)?;
-    
+
     match (parsed_ping, parsed_pong) {
         (Message::Ping, Message::Pong) => {
             // Success
         }
         _ => panic!("Wrong message types"),
     }
-    
+
     Ok(())
 }
 
@@ -225,17 +225,17 @@ async fn test_error_message() -> Result<()> {
     let error = Message::Error {
         message: "Test error message".to_string(),
     };
-    
+
     let json = serde_json::to_string(&error)?;
     let parsed: Message = serde_json::from_str(&json)?;
-    
+
     match parsed {
         Message::Error { message } => {
             assert_eq!(message, "Test error message");
         }
         _ => panic!("Wrong message type"),
     }
-    
+
     Ok(())
 }
 
@@ -246,9 +246,9 @@ async fn test_full_client_server_integration() -> Result<()> {
     // This test demonstrates how to test with a real server
     // To run this test, start the server first and then run:
     // cargo test test_full_client_server_integration -- --ignored
-    
+
     println!("This test requires a running server on localhost:8080");
     println!("Start the server with: cargo run --bin reverse-shell-server");
-    
+
     Ok(())
 }
