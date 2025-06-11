@@ -55,10 +55,6 @@ jobs:
             os: ubuntu-latest
             cross: false
             
-          - target: x86_64-unknown-linux-musl
-            os: ubuntu-latest
-            cross: false
-            
           # Windows targets
           - target: x86_64-pc-windows-msvc
             os: windows-latest
@@ -90,16 +86,6 @@ jobs:
             target
           key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           
-      - name: Install cross-compilation tools
-        if: matrix.cross
-        run: |
-          cargo install cross --git https://github.com/cross-rs/cross
-          
-      - name: Install musl tools
-        if: matrix.target == 'x86_64-unknown-linux-musl'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y musl-tools musl-dev
           
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
@@ -108,16 +94,7 @@ jobs:
           sudo apt-get install -y pkg-config libssl-dev
           
       - name: Build with cargo
-        if: '!matrix.cross'
-        env:
-          # Use static linking for musl targets
-          RUSTFLAGS: ${{ matrix.target == 'x86_64-unknown-linux-musl' && '-C target-feature=+crt-static' || '' }}
-          CC: ${{ matrix.target == 'x86_64-unknown-linux-musl' && 'musl-gcc' || '' }}
         run: cargo build --release --workspace --target ${{ matrix.target }}
-        
-      - name: Build with cross
-        if: matrix.cross
-        run: cross build --release --workspace --target ${{ matrix.target }}
         
       - name: Create archive (Unix)
         if: matrix.os != 'windows-latest'

@@ -18,7 +18,6 @@ thiserror = { workspace = true }
 native-tls = { workspace = true }
 url = { workspace = true }
 futures-util = { workspace = true }
-openssl = { workspace = true }
 
 [dev-dependencies]
 tokio-test = "0.4"
