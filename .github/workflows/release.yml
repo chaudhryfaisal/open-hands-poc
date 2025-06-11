@@ -20,7 +20,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
@@ -82,7 +82,7 @@ jobs:
           targets: ${{ matrix.target }}
           
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
@@ -136,7 +136,7 @@ jobs:
           7z a ../../../dist/reverse-shell-${{ matrix.target }}.zip reverse-shell-server.exe reverse-shell-client.exe reverse-shell-cli.exe
           
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: reverse-shell-${{ matrix.target }}
           path: dist/*
@@ -151,7 +151,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
           
